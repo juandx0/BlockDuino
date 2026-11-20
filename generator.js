@@ -82,6 +82,8 @@ const BD={
   if(all.some(b=>b.type==="arduino_servo"))this.headers.add("Servo.h");
   if(all.some(b=>["math_single","math_round","math_arithmetic"].includes(b.type)))this.headers.add("math.h");
   let pre="";
+  const servoPins=[...new Set(all.filter(b=>b.type==="arduino_servo").map(b=>b.getFieldValue("PIN")))];
+  if(servoPins.length)pre+=servoPins.map(p=>"Servo bd_servo_"+p+";").join("\\n")+"\\n\\n";
   if(all.some(b=>b.type==="arduino_ultrasonic"))pre+="long bd_readDistance(int trig, int echo) { pinMode(trig, OUTPUT); digitalWrite(trig, LOW); delayMicroseconds(2); digitalWrite(trig, HIGH); delayMicroseconds(10); digitalWrite(trig, LOW); pinMode(echo, INPUT); long us = pulseIn(echo, HIGH, 30000); return us == 0 ? -1 : us * 0.0343 / 2; }\n\n";
   if(all.some(b=>["arduino_lcd_init","arduino_lcd_print","arduino_lcd_clear"].includes(b.type))){this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");pre+="// Ajusta dirección, columnas y filas según tu pantalla.\nLiquidCrystal_I2C bd_lcd(0x27, 16, 2);\n\n";}
   let code=Array.from(this.headers).map(h=>"#include <"+h+">\n").join("")+(this.headers.size?"\n":"")+"// Generado con BlockDuino\n\n";
