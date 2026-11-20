@@ -71,8 +71,6 @@ const BD={
  },
  ifStmt(b,n){const s=this.ind(n);let out="",i=0;while(b.getInput("IF"+i)){out+=s+(i?"else if":"if")+" ("+this.val(b,"IF"+i)+") {\n"+this.stmts(b.getInputTargetBlock("DO"+i),n+1)+s+"}";i++;if(b.getInput("IF"+i)||b.getInput("ELSE"))out+=" ";}if(b.getInput("ELSE"))out+="else {\n"+this.stmts(b.getInputTargetBlock("ELSE"),n+1)+s+"}";return out+"\n";},
  validate(roots){
-  if(!roots.some(b=>b.type==="arduino_setup"))this.errors.push("Falta «Al iniciar Arduino».");
-  if(!roots.some(b=>b.type==="arduino_loop"))this.errors.push("Falta «Por siempre».");
   const pwm={uno:[3,5,6,9,10,11],nano:[3,5,6,9,10,11],mega:[2,3,4,5,6,7,8,9,10,11,12,13,44,45,46]};
   workspace.getAllBlocks(false).forEach(b=>{
    if(b.type==="arduino_analogwrite"&&!pwm[this.board].includes(Number(b.getFieldValue("PIN"))))this.warnings.push("El pin "+b.getFieldValue("PIN")+" no es PWM en "+this.board.toUpperCase()+".");
@@ -103,7 +101,7 @@ const BD={
   if(vars)code+=vars+"\n\n";
   const buttons=all.filter(b=>b.type==="arduino_button").map(b=>"  pinMode("+b.getFieldValue("PIN")+", "+b.getFieldValue("MODE")+");");
   const servos=servoPins.map(p=>"  bd_servo_"+p+".attach("+p+");");
-  code+=pre+"void setup() {\n"+buttons.concat(servos).join("\n")+(buttons.length||servos.length?"\n":"")+this.stmts(setup.getInputTargetBlock("DO"),1)+"}\n\nvoid loop() {\n"+this.stmts(loop.getInputTargetBlock("DO"),1)+"}\n";
+  code+=pre+"void setup() {\n"+buttons.concat(servos).join("\n")+(buttons.length||servos.length?"\n":"")+this.stmts(setup?.getInputTargetBlock("DO"),1)+"}\n\nvoid loop() {\n"+this.stmts(loop?.getInputTargetBlock("DO"),1)+"}\n";
   const functions=all.filter(b=>b.type==="procedures_defnoreturn"||b.type==="procedures_defreturn");
   if(functions.length){let fn="";functions.forEach(b=>{let args=[];try{args=b.getVars?b.getVars():[];}catch(e){}const params=args.map(a=>"float "+this.safe(typeof a==="string"?a:a.name)).join(", ");const name=this.safe(b.getFieldValue("NAME")||"funcion");const returns=b.type==="procedures_defreturn";fn+=(returns?"float ":"void ")+name+"("+params+") {\n"+this.stmts(b.getInputTargetBlock("STACK"),1);if(returns)fn+="  return "+this.val(b,"RETURN")+";\n";fn+="}\n\n";});code=code.replace("void setup()",fn+"void setup()");}
   if(roots.some(b=>!["arduino_setup","arduino_loop","arduino_variable","arduino_constant","procedures_defnoreturn","procedures_defreturn"].includes(b.type)))this.warnings.push("Hay bloques sueltos fuera de setup() y loop(); no se incluyeron.");
