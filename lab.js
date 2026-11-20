@@ -20,12 +20,22 @@
   function openModal(id){ $(id).classList.add("visible"); }
 
   function initAssistant(){
-    modal("bdAssistant","Asistente de bloques",`
-      <p>Describe lo que quieres que haga Arduino. El asistente convierte algunas instrucciones comunes en bloques editables.</p>
-      <textarea id="bdPrompt" rows="3" placeholder="Ej: Parpadea un LED conectado al pin 13 cada segundo"></textarea>
-      <div class="bdLabActions"><button id="bdBuild">✨ Crear bloques</button></div>
-      <p id="bdAssistantStatus" class="bdLabHint">Este asistente funciona con instrucciones reconocidas; todavía no es un modelo de IA generativa.</p>`);
+    modal("bdAssistant","Asistente IA generativo",`
+      <p>Describe el proyecto con tus propias palabras. La IA propondrá una secuencia de bloques, generará el programa y explicará qué construyó.</p>
+      <textarea id="bdPrompt" rows="4" maxlength="1800" placeholder="Ej: Enciende un LED del pin 13 durante medio segundo, apágalo y repite."></textarea>
+      <div class="bdLabActions"><button id="bdBuild">✨ Generar con IA</button></div>
+      <div id="bdAssistantStatus" class="bdLabHint" role="status">Conectando con el servicio de IA...</div>
+      <section id="bdAiSummary" class="bdAiSummary" hidden></section>
+      <p class="bdLabHint">La IA solo genera bloques de la lista permitida. Revisa el programa antes de cargarlo a una placa.</p>`);
     $("bdBuild").onclick = buildFromPrompt;
+    checkAiService();
+  }
+  async function checkAiService(){
+    try{
+      const r=await fetch("/api/assistant",{method:"GET"});
+      if(r.ok){$("bdAssistantStatus").textContent="✓ Servicio de IA disponible.";return;}
+      $("bdAssistantStatus").textContent="El asistente necesita configurar el backend /api/assistant. Consulta README_AI.md.";
+    }catch(e){$("bdAssistantStatus").textContent="Backend de IA no disponible en este alojamiento. Consulta README_AI.md para desplegarlo.";}
   }
   function make(type, fields){
     const b=workspace.newBlock(type);
@@ -38,35 +48,58 @@
     parent.getInput(input).connection.connect(blocks[0].previousConnection);
     for(let i=0;i<blocks.length-1;i++)blocks[i].nextConnection.connect(blocks[i+1].previousConnection);
   }
-  function buildFromPrompt(){
-    const raw=$("bdPrompt").value.trim(), p=raw.toLowerCase();
-    const pinMatch=p.match(/(?:pin|pino)\s*(\d+)/), pin=pinMatch?Number(pinMatch[1]):13;
-    if(!raw){$("bdAssistantStatus").textContent="Escribe primero qué quieres construir.";return;}
-    if(pin<0||pin>13){$("bdAssistantStatus").textContent="En Arduino UNO usa un pin digital entre 0 y 13.";return;}
-    let setup=[],loop=[];
-    if(/parpade|intermit|blink/.test(p)){
-      setup=[make("arduino_pinmode",{PIN:pin,MODE:"OUTPUT"})];
-      const hi=make("arduino_digitalwrite",{PIN:pin,STATE:"HIGH"}), d1=make("arduino_delay"), lo=make("arduino_digitalwrite",{PIN:pin,STATE:"LOW"}), d2=make("arduino_delay");
-      value(d1,"TIME",make("math_number",{NUM:/\d+\s*ms/.test(p)?Number(p.match(/(\d+)\s*ms/)[1]):1000}));
-      value(d2,"TIME",make("math_number",{NUM:/\d+\s*ms/.test(p)?Number(p.match(/(\d+)\s*ms/)[1]):1000}));
-      loop=[hi,d1,lo,d2];
-    } else if(/encien|prend|activar|turn on/.test(p)){
-      setup=[make("arduino_pinmode",{PIN:pin,MODE:"OUTPUT"})];
-      loop=[make("arduino_digitalwrite",{PIN:pin,STATE:"HIGH"})];
-    } else if(/apag|desactiv|turn off/.test(p)){
-      setup=[make("arduino_pinmode",{PIN:pin,MODE:"OUTPUT"})];
-      loop=[make("arduino_digitalwrite",{PIN:pin,STATE:"LOW"})];
-    } else {
-      $("bdAssistantStatus").textContent="Todavía no reconozco esa instrucción. Prueba: parpadear, encender o apagar un LED.";
-      return;
+  function buildCommand(command){
+    switch(command.op){
+      case "pinMode": return make("arduino_pinmode",{PIN:command.pin,MODE:command.mode});
+      case "digitalWrite": return make("arduino_digitalwrite",{PIN:command.pin,STATE:command.state});
+      case "delay": {const b=make("arduino_delay");value(b,"TIME",make("math_number",{NUM:command.ms}));return b;}
+      case "serialBegin": return make("arduino_serial_begin",{BAUD:String(command.baud)});
+      case "serialPrint": {const b=make("arduino_serial_print",{METHOD:command.newline?"println":"print"});value(b,"VALUE",make("text",{TEXT:command.text}));return b;}
+      default: throw new Error("La IA propuso una operación no permitida: "+command.op);
     }
-    workspace.clear();
-    const s=make("arduino_setup",{}), l=make("arduino_loop",{});
-    chain(s,"DO",setup);chain(l,"DO",loop);
-    s.moveBy(60,50);l.moveBy(60,250);
-    window.BDManualMode=false;generateCode();
-    $("bdAssistantStatus").textContent="✓ Bloques creados. Ya puedes editarlos en el espacio de trabajo.";
-    closeModal("bdAssistant");
+  }
+  function renderAiSummary(plan){
+    const box=$("bdAiSummary");
+    const rows=[
+      "<h3>🧠 Resumen de lo que hizo</h3>",
+      "<p>"+escapeHtml(plan.summary)+"</p>",
+      "<p>"+escapeHtml(plan.explanation)+"</p>",
+      "<h4>Bloques generados</h4>",
+      "<ul><li>Al iniciar: "+plan.setup.length+" instrucciones</li><li>Por siempre: "+plan.loop.length+" instrucciones</li></ul>"
+    ];
+    if(plan.notes&&plan.notes.length)rows.push("<h4>Notas</h4><ul>"+plan.notes.map(x=>"<li>"+escapeHtml(x)+"</li>").join("")+"</ul>");
+    box.innerHTML=rows.join("");box.hidden=false;
+  }
+  function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  async function buildFromPrompt(){
+    const raw=$("bdPrompt").value.trim(),status=$("bdAssistantStatus"),button=$("bdBuild");
+    if(!raw){status.textContent="Escribe qué quieres construir.";return;}
+    button.disabled=true;button.textContent="⏳ Generando...";
+    status.textContent="La IA está diseñando el programa...";
+    $("bdAiSummary").hidden=true;
+    try{
+      const response=await fetch("/api/assistant",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:raw,board:$("boardSelect").value})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||("Error del servicio ("+response.status+")."));
+      const plan=data.plan;
+      if(!plan||!Array.isArray(plan.setup)||!Array.isArray(plan.loop)||typeof plan.summary!=="string")throw new Error("La respuesta de IA no tiene el formato esperado.");
+      if(plan.setup.length+plan.loop.length>50)throw new Error("El programa generado supera el límite de 50 instrucciones.");
+      const setupBlocks=plan.setup.map(buildCommand),loopBlocks=plan.loop.map(buildCommand);
+      Blockly.Events.disable();
+      try{
+        workspace.clear();
+        const s=make("arduino_setup",{}),l=make("arduino_loop",{});
+        chain(s,"DO",setupBlocks);chain(l,"DO",loopBlocks);
+        s.moveBy(60,50);l.moveBy(60,260);
+      }finally{Blockly.Events.enable();}
+      window.BDManualMode=false;generateCode();saveLocal();
+      renderAiSummary(plan);
+      status.textContent="✓ Programa generado. Revisa los bloques y el código antes de usarlo.";
+      button.textContent="↻ Generar otra versión";
+    }catch(error){
+      status.textContent="No se pudo generar: "+error.message;
+      button.textContent="↻ Intentar de nuevo";
+    }finally{button.disabled=false;}
   }
 
   function initSimulator(){
