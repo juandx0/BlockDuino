@@ -58,7 +58,7 @@ class BDParser {
       else if(type==="math_arithmetic") b=this.make(type,{OP:({"+":"ADD","-":"MINUS","*":"MULTIPLY","/":"DIVIDE"})[op]});
       else b=this.make(type);
       if(type==="math_modulo"){this.connectValue(b,"DIVIDEND",left);this.connectValue(b,"DIVISOR",right);}
-      else {this.connectValue(b,"A",left);this.connectValue(b,"B",right);}
+      else if(b.type!=="text_join"){this.connectValue(b,"A",left);this.connectValue(b,"B",right);}
       left=b;
     }
     return left;
