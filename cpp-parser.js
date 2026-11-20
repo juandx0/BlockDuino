@@ -2,7 +2,7 @@
 // No es un parser de C++ completo: solo acepta construcciones que BlockDuino puede representar.
 class BDParser {
   constructor(source) {
-    this.tokens = source.match(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|(?:0x[0-9a-fA-F]+|\\d+(?:\\.\\d+)?)|[A-Za-z_][A-Za-z0-9_]*|\\+\\+|--|==|!=|<=|>=|&&|\\|\\||\\+=|-=|\\*=|\\/=|[{}()\\[\\];,.=+\\-*\\/%<>!&|#]/g) || [];
+    this.tokens = source.match(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)|[A-Za-z_][A-Za-z0-9_]*|\+\+|--|==|!=|<=|>=|&&|\|\||\+=|-=|\*=|\/=|[{}()\[\];,.=+\-*\/%<>!&|#]/g) || [];
     this.i = 0;
     this.variables = new Map();
     this.created = [];
@@ -203,21 +203,21 @@ class BDParser {
 function importCppToBlocks(source) {
   // Solo reconstruye el subconjunto que BlockDuino puede representar.
   const clean=source
-    .replace(/^\\s*#include[^\\n]*$/gm,"")
-    .replace(/\\/\\*[\\s\\S]*?\\*\\//g,"")
-    .replace(/\\/\\/[^\\n]*/g,"");
+    .replace(/^\s*#include[^\n]*$/gm,"")
+    .replace(/\/\*[\s\S]*?\*\//g,"")
+    .replace(/\/\/[^\n]*/g,"");
   const previous=Blockly.serialization.workspaces.save(workspace);
   Blockly.Events.disable();
   try {
     workspace.clear();
-    const setupIndex=clean.search(/\\bvoid\\s+setup\\s*\\(/);
+    const setupIndex=clean.search(/\bvoid\s+setup\s*\(/);
     const prefix=setupIndex<0?"":clean.slice(0,setupIndex);
     const body=setupIndex<0?clean:clean.slice(setupIndex);
-    const globals=[...prefix.matchAll(/\\b(const\\s+)?(int|float|bool|String)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*([^;]+);/g)];
+    const globals=[...prefix.matchAll(/\b(const\s+)?(int|float|bool|String)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^;]+);/g)];
     const stripped=prefix
-      .replace(/\\b(?:const\\s+)?(?:int|float|bool|String)\\s+[A-Za-z_][A-Za-z0-9_]*\\s*=\\s*[^;]+;/g,"")
-      .replace(/\\bServo\\s+bd_servo_\\d+\\s*;/g,"")
-      .replace(/\\bLiquidCrystal_I2C\\s+bd_lcd\\s*\\([^;]*\\);/g,"")+body;
+      .replace(/\b(?:const\s+)?(?:int|float|bool|String)\s+[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^;]+;/g,"")
+      .replace(/\bServo\s+bd_servo_\d+\s*;/g,"")
+      .replace(/\bLiquidCrystal_I2C\s+bd_lcd\s*\([^;]*\);/g,"")+body;
     for(const g of globals) {
       const b=workspace.newBlock(g[1]?"arduino_constant":"arduino_variable");
       b.setFieldValue(g[2],"TYPE");b.setFieldValue(g[3],"NAME");
