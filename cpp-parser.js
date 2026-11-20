@@ -70,6 +70,7 @@ class BDParser {
     if(t.startsWith('"')) return this.make("text",{TEXT:JSON.parse(t)});
     if(t==="true"||t==="false") return this.make("logic_boolean",{BOOL:t.toUpperCase()});
     if(t==="HIGH"||t==="LOW") return this.make("math_number",{NUM:t==="HIGH"?"1":"0"});
+    if(/^A[0-7]$/.test(t)) return {kind:"pin",value:t};
     if(/^[A-Za-z_]/.test(t)) {
       if(this.eat("(")) {
         const args=[];
@@ -91,12 +92,13 @@ class BDParser {
   callValue(name,args) {
     const one=args[0];
     if(name==="analogRead"||name==="digitalRead") {
-      if(!one || !["math_number","variables_get"].includes(one.type)) throw new Error("Pin no reconocido en "+name);
-      const pin=one.type==="math_number"?one.getFieldValue("NUM"):null;
-      const b=this.make(name==="analogRead"?"arduino_analogread":"arduino_digitalread",pin!==null?{PIN:pin}:{});
-      if(pin===null) throw new Error("El pin debe ser una constante.");
-      return b;
+      const pin=one?.kind==="pin"?one.value:one?.type==="math_number"?one.getFieldValue("NUM"):null;
+      if(pin===null||pin===undefined) throw new Error("El pin debe ser una constante.");
+      return this.make(name==="analogRead"?"arduino_analogread":"arduino_digitalread",{PIN:pin});
     }
+    if(name==="bd_readDistance") return this.make("arduino_ultrasonic",{TRIG:args[0]?.getFieldValue?.("NUM")||"7",ECHO:args[1]?.getFieldValue?.("NUM")||"8"});
+    if(name==="pow") {const b=this.make("math_arithmetic",{OP:"POWER"});this.connectValue(b,"A",args[0]);this.connectValue(b,"B",args[1]);return b;}
+    if(name==="random") {const b=this.make("math_random_int");this.connectValue(b,"FROM",args[0]);this.connectValue(b,"TO",args[1]);return b;}
     if(name==="Serial.available") return this.make("arduino_serial_available");
     if(name==="Serial.read") return this.make("arduino_serial_read");
     if(name==="map"||name==="constrain"||["sin","cos","tan"].includes(name)) {
@@ -127,16 +129,19 @@ class BDParser {
   statement() {
     if(this.eat(";")) return null;
     if(this.eat("if")) {
-      this.need("(");const cond=this.expression();this.need(")");
       const b=this.make("controls_if");
-      this.connectValue(b,"IF0",cond);
+      this.need("(");this.connectValue(b,"IF0",this.expression());this.need(")");
       this.connectStatement(b,"DO0",this.blockBody());
-      if(this.eat("else")) {
-        const elseBlock=this.blockBody();
-        // Blockly controls_if needs its ELSE input enabled through its mutation.
-        const mutation=b.mutationToDom?.();
-        if(mutation){mutation.setAttribute("else","1");b.domToMutation(mutation);this.connectStatement(b,"ELSE",elseBlock);}
-        else throw new Error("No se pudo crear el bloque si/no.");
+      let elseif=0;
+      while(this.eat("else")) {
+        if(this.eat("if")) {
+          elseif++;this.need("(");const cond=this.expression();this.need(")");const body=this.blockBody();
+          const mut=b.mutationToDom();mut.setAttribute("elseif",String(elseif));b.domToMutation(mut);
+          this.connectValue(b,"IF"+elseif,cond);this.connectStatement(b,"DO"+elseif,body);
+        } else {
+          const body=this.blockBody();const mut=b.mutationToDom();mut.setAttribute("elseif",String(elseif));mut.setAttribute("else","1");b.domToMutation(mut);
+          this.connectStatement(b,"ELSE",body);break;
+        }
       }
       return b;
     }
@@ -155,7 +160,7 @@ class BDParser {
     }
     if(this.eat("digitalWrite")||this.eat("analogWrite")) {
       const name=this.tokens[this.i-1];this.need("(");const pin=this.take();this.need(",");const value=this.expression();this.need(")");this.need(";");
-      if(name==="digitalWrite") return this.make("arduino_digitalwrite",{PIN:pin,STATE:value.type==="logic_boolean"?(value.getFieldValue("BOOL")==="TRUE"?"HIGH":"LOW"):"HIGH"});
+      if(name==="digitalWrite") return this.make("arduino_digitalwrite",{PIN:pin,STATE:value.type==="math_number"&&Number(value.getFieldValue("NUM"))===0?"LOW":"HIGH"});
       const b=this.make("arduino_analogwrite",{PIN:pin});this.connectValue(b,"VALUE",value);return b;
     }
     if(this.eat("delay")) {this.need("(");const v=this.expression();this.need(")");this.need(";");const b=this.make("arduino_delay");this.connectValue(b,"TIME",v);return b;}
@@ -205,11 +210,14 @@ function importCppToBlocks(source) {
   Blockly.Events.disable();
   try {
     workspace.clear();
-    const globals=[...clean.matchAll(/\\b(const\\s+)?(int|float|bool|String)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*([^;]+);/g)];
-    const stripped=clean
+    const setupIndex=clean.search(/\\bvoid\\s+setup\\s*\\(/);
+    const prefix=setupIndex<0?"":clean.slice(0,setupIndex);
+    const body=setupIndex<0?clean:clean.slice(setupIndex);
+    const globals=[...prefix.matchAll(/\\b(const\\s+)?(int|float|bool|String)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*([^;]+);/g)];
+    const stripped=prefix
       .replace(/\\b(?:const\\s+)?(?:int|float|bool|String)\\s+[A-Za-z_][A-Za-z0-9_]*\\s*=\\s*[^;]+;/g,"")
       .replace(/\\bServo\\s+bd_servo_\\d+\\s*;/g,"")
-      .replace(/\\bLiquidCrystal_I2C\\s+bd_lcd\\s*\\([^;]*\\);/g,"");
+      .replace(/\\bLiquidCrystal_I2C\\s+bd_lcd\\s*\\([^;]*\\);/g,"")+body;
     for(const g of globals) {
       const b=workspace.newBlock(g[1]?"arduino_constant":"arduino_variable");
       b.setFieldValue(g[2],"TYPE");b.setFieldValue(g[3],"NAME");
