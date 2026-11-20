@@ -39,9 +39,9 @@
     </section>
     <div id="splitter" title="Arrastra para cambiar el tamaño"></div>
     <section class="panel code">
-      <div class="panelHead"><div><span class="eyebrow">SALIDA</span><h2>Código C++</h2></div><div class="panelTools"><button id="generateButton">Generar código</button><button class="secondary" id="copyButton">Copiar</button></div></div>
+      <div class="panelHead"><div><span class="eyebrow">EDITOR BIDIRECCIONAL</span><h2>Código C++</h2></div><div class="panelTools"><button class="secondary" id="generateButton" title="Actualizar desde los bloques">↻ Sincronizar</button><button class="secondary" id="copyButton">Copiar</button></div></div>
       <div id="diagnostics" class="diagnostics">Construye tu programa y pulsa «Generar código».</div>
-      <pre><code id="output">// Tu código Arduino aparecerá aquí</code></pre>
+      <textarea id="output" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Editor de código C++" placeholder="// Escribe código Arduino aquí...">// Tu código Arduino aparecerá aquí</textarea>
       <div class="codeFoot"><span id="codeInfo">Arduino · C++</span><span>BlockDuino Mega Update</span></div>
     </section>
   </main>
@@ -82,5 +82,5 @@
     </category>
     <category name="🧰 Texto" categorystyle="text_category"><block type="text"></block><block type="text_join"></block><block type="text_length"></block></category>
   </xml>
-  <script src="blocks.js"></script><script src="generator.js"></script><script src="app.js"></script>
+  <script src="blocks.js"></script><script src="generator.js"></script><script src="cpp-parser.js"></script><script src="app.js"></script>
 </body></html>
