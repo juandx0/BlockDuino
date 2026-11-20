@@ -243,7 +243,8 @@ function importCppToBlocks(source) {
     if(parsed.setup) setup.getInput("DO").connection.connect(parsed.setup.previousConnection);
     if(parsed.loop) loop.getInput("DO").connection.connect(parsed.loop.previousConnection);
     workspace.getAllBlocks(false).forEach(b=>{if(!b.rendered)b.initSvg();b.render();});
-    setup.moveBy(70,55);loop.moveBy(70,250);\n    globalBlocks.forEach((b,index)=>b.moveBy(70,450+index*85));
+    setup.moveBy(70,55);loop.moveBy(70,250);
+    globalBlocks.forEach((b,index)=>b.moveBy(70,450+index*85));
     workspace.clearUndo();
   } catch(e) {
     workspace.clear();
