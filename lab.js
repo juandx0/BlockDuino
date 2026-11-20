@@ -83,7 +83,7 @@
       <div id="bdSimLog" class="bdSimLog">Diagnóstico: añade componentes y ejecuta el programa.</div>`);
     $("bdAddPart").onclick=addPart;
     $("bdRun").onclick=startSimulation;
-    $("bdStep").onclick=()=>{stopSimulation();prepareSimulation();runStep();};
+    $("bdStep").onclick=()=>{stopSimulation();if(!steps.length||stepIndex>=steps.length)prepareSimulation();runStep();};
     $("bdStop").onclick=()=>stopSimulation();
     renderParts();
   }
