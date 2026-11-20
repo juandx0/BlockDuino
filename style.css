@@ -8,12 +8,17 @@ body {
   background: #111827;
   color: white;
   font-family: Arial, sans-serif;
+  overflow: hidden;
 }
 
 header {
-  padding: 15px 25px;
+  height: 90px;
+  padding: 12px 22px;
   background: #0b1220;
   border-bottom: 1px solid #263449;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 header h1 {
@@ -22,44 +27,52 @@ header h1 {
 }
 
 header p {
-  margin-bottom: 0;
+  margin: 5px 0 0;
   color: #aab6c8;
 }
 
 main {
-  display: flex;
-  gap: 15px;
-  padding: 15px;
-  height: calc(100vh - 100px);
+  display: grid;
+  grid-template-columns: 1fr 8px 1fr;
+  height: calc(100vh - 90px);
+  padding: 12px;
+  gap: 0;
+  min-height: 0;
 }
 
 .editor, .code {
-  flex: 1;
   min-width: 0;
+  min-height: 0;
   background: #1e293b;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .toolbar {
-  padding: 12px;
+  min-height: 55px;
+  padding: 10px 14px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .toolbar h2 {
   font-size: 17px;
 }
 
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
 button {
   background: #0dba91;
   color: #061b17;
   border: none;
-  padding: 10px 15px;
+  padding: 10px 14px;
   border-radius: 7px;
   cursor: pointer;
   font-weight: bold;
@@ -69,14 +82,24 @@ button:hover {
   background: #35e0b5;
 }
 
+#helpButton {
+  background: #34465e;
+  color: white;
+}
+
+#helpButton:hover {
+  background: #496482;
+}
+
 #blocklyDiv {
   flex: 1;
   width: 100%;
-  min-height: 300px;
+  min-height: 0;
 }
 
 .code pre {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   margin: 0;
   padding: 20px;
@@ -86,14 +109,111 @@ button:hover {
   white-space: pre-wrap;
 }
 
+#splitter {
+  background: #334155;
+  cursor: col-resize;
+  border-radius: 8px;
+  margin: 0 2px;
+  touch-action: none;
+  transition: background 0.2s;
+}
+
+#splitter:hover {
+  background: #35d6b0;
+}
+
+body.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.75);
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+}
+
+.overlay.visible {
+  display: flex;
+}
+
+.guide {
+  position: relative;
+  background: #1e293b;
+  color: white;
+  border: 1px solid #40516a;
+  border-radius: 14px;
+  padding: 25px;
+  width: 650px;
+  max-width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.guide h2 {
+  color: #35d6b0;
+  padding-right: 35px;
+}
+
+.guide h3 {
+  color: #35d6b0;
+  margin-top: 25px;
+}
+
+.guide p, .guide li {
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.guideItem {
+  padding: 12px;
+  margin: 10px 0;
+  background: #111827;
+  border-radius: 8px;
+}
+
+.guideItem strong {
+  color: #f1f5f9;
+}
+
+.guideItem code {
+  display: inline-block;
+  margin-top: 8px;
+  color: #35d6b0;
+}
+
+.closeButton {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  background: #334155;
+  color: white;
+  font-size: 17px;
+}
+
 @media (max-width: 750px) {
-  main {
-    height: auto;
-    min-height: calc(100vh - 100px);
-    flex-direction: column;
+  body {
+    overflow: auto;
   }
 
-  .editor, .code {
-    min-height: 450px;
+  main {
+    height: auto;
+    min-height: 1100px;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(450px, 1fr) 8px minmax(450px, 1fr);
+  }
+
+  #splitter {
+    cursor: row-resize;
+    margin: 2px 0;
+  }
+
+  body.resizing {
+    cursor: row-resize;
   }
 }
