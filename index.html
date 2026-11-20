@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlockDuino</title>
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1>⚡ BlockDuino</h1>
+    <p>Programa Arduino con bloques visuales</p>
+  </header>
+
+  <main>
+    <section class="editor">
+      <div class="toolbar">
+        <h2>Editor de bloques</h2>
+        <button onclick="generateCode()">Generar C++</button>
+      </div>
+
+      <div id="blocklyDiv"></div>
+    </section>
+
+    <section class="code">
+      <div class="toolbar">
+        <h2>Código Arduino</h2>
+        <button onclick="copyCode()">Copiar código</button>
+      </div>
+
+      <pre><code id="output">// Tu código aparecerá aquí</code></pre>
+    </section>
+  </main>
+
+  <xml id="toolbox" style="display:none">
+    <category name="Arduino" colour="#009688">
+      <block type="arduino_setup"></block>
+      <block type="arduino_loop"></block>
+      <block type="arduino_pinmode"></block>
+      <block type="arduino_digitalwrite"></block>
+      <block type="arduino_delay"></block>
+      <block type="arduino_repeat"></block>
+    </category>
+
+    <category name="Lógica" categorystyle="logic_category">
+      <block type="controls_if"></block>
+    </category>
+
+    <category name="Matemáticas" categorystyle="math_category">
+      <block type="math_number"></block>
+      <block type="math_arithmetic"></block>
+    </category>
+  </xml>
+
+  <script src="blocks.js"></script>
+  <script src="generator.js"></script>
+
+  <script>
+    const workspace = Blockly.inject("blocklyDiv", {
+      toolbox: document.getElementById("toolbox"),
+      trashcan: true,
+      zoom: {
+        controls: true,
+        wheel: true,
+        startScale: 0.9
+      },
+      grid: {
+        spacing: 20,
+        length: 3,
+        colour: "#888",
+        snap: true
+      }
+    });
+  </script>
+</body>
+</html>
