@@ -62,12 +62,14 @@ class BDParser {
   }
   primary() {
     if(this.eat("(")){const b=this.expression();this.need(")");return b;}
+    if(this.eat("-")){const b=this.make("math_single",{OP:"NEG"});this.connectValue(b,"NUM",this.primary());return b;}
     if(this.eat("!")){const b=this.make("logic_negate");this.connectValue(b,"BOOL",this.primary());return b;}
     const t=this.take();
     if(!t) throw new Error("Expresión incompleta.");
     if(/^\\d/.test(t)) return this.make("math_number",{NUM:t});
     if(t.startsWith('"')) return this.make("text",{TEXT:JSON.parse(t)});
     if(t==="true"||t==="false") return this.make("logic_boolean",{BOOL:t.toUpperCase()});
+    if(t==="HIGH"||t==="LOW") return this.make("math_number",{NUM:t==="HIGH"?"1":"0"});
     if(/^[A-Za-z_]/.test(t)) {
       if(this.eat("(")) {
         const args=[];
@@ -143,6 +145,10 @@ class BDParser {
       const b=this.make("arduino_while");this.connectValue(b,"COND",cond);this.connectStatement(b,"DO",this.blockBody());return b;
     }
     if(this.eat("break")){this.need(";");return this.make("arduino_break");}
+    if(this.eat("for")) {
+      this.need("(");this.eat("int");const variable=this.id();this.need("=");this.take();this.need(";");this.id();this.need("<");const times=this.expression();this.need(";");this.id();this.eat("++");this.need(")");
+      const b=this.make("arduino_repeat");this.connectValue(b,"TIMES",times);this.connectStatement(b,"DO",this.blockBody());return b;
+    }
     if(this.eat("pinMode")) {
       this.need("(");const pin=this.take();this.need(",");const mode=this.take();this.need(")");this.need(";");
       return this.make("arduino_pinmode",{PIN:pin,MODE:mode});
@@ -153,6 +159,9 @@ class BDParser {
       const b=this.make("arduino_analogwrite",{PIN:pin});this.connectValue(b,"VALUE",value);return b;
     }
     if(this.eat("delay")) {this.need("(");const v=this.expression();this.need(")");this.need(";");const b=this.make("arduino_delay");this.connectValue(b,"TIME",v);return b;}
+    if(this.eat("tone")) {this.need("(");const pin=this.take();this.need(",");const freq=this.expression();this.need(",");const duration=this.expression();this.need(")");this.need(";");const b=this.make("arduino_buzzer",{PIN:pin});this.connectValue(b,"FREQ",freq);this.connectValue(b,"DURATION",duration);return b;}
+    if(this.peek()?.startsWith("bd_servo_")) {const servo=this.take();const pin=servo.replace("bd_servo_","");this.need(".");const method=this.id();this.need("(");const value=this.expression();this.need(")");this.need(";");if(method==="attach")return null;if(method==="write"){const b=this.make("arduino_servo",{PIN:pin});this.connectValue(b,"ANGLE",value);return b;}throw new Error("Método Servo no compatible: "+method);}
+    if(this.eat("bd_lcd")) {this.need(".");const method=this.id();this.need("(");const args=[];if(!this.eat(")")){do{args.push(this.expression());}while(this.eat(","));this.need(")");}this.need(";");if(method==="init"||method==="backlight"||method==="clear")return method==="clear"?this.make("arduino_lcd_clear"):null;if(method==="setCursor"){this._lcdCursor=args;return null;}if(method==="print"){const b=this.make("arduino_lcd_print");this.connectValue(b,"TEXT",args[0]);const col=this._lcdCursor?.[0]||this.make("math_number",{NUM:"0"});const row=this._lcdCursor?.[1]||this.make("math_number",{NUM:"0"});this.connectValue(b,"COL",col);this.connectValue(b,"ROW",row);return b;}throw new Error("Método LCD no compatible: "+method);}
     if(this.eat("Serial")) {
       this.need(".");const method=this.id();this.need("(");
       if(method==="begin"){const baud=this.take();this.need(")");this.need(";");return this.make("arduino_serial_begin",{BAUD:baud});}
