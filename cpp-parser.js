@@ -39,7 +39,7 @@ class BDParser {
     target.connection.connect(first.previousConnection);
   }
   append(head,tail,next) {
-    if (!next) return tail;
+    if (!next) return {head,tail};
     if (!head) return {head:next,tail:next};
     if (tail && tail.nextConnection && next.previousConnection) tail.nextConnection.connect(next.previousConnection);
     return {head,tail:next};
