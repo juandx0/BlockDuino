@@ -1,10 +1,11 @@
-// Generador C++ modular: expresiones, instrucciones y validaciones.
+// Generador C++ de BlockDuino
 const BD={
  headers:new Set(),warnings:[],errors:[],board:"uno",
  ind:n=>"  ".repeat(n),
  val(b,k){const x=b.getInputTargetBlock(k);return x?this.expr(x):"0";},
  safe(s){let x=String(s||"variable").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9_]/g,"_");if(!/^[a-zA-Z_]/.test(x))x="_"+x;return x;},
  variable(id){const v=workspace.getVariableById(id);return v?this.safe(v.name):"variable";},
+ call(b){let a=[];for(let i=0;i<20&&b.getInput("ARG"+i);i++)a.push(this.val(b,"ARG"+i));return this.safe(b.getFieldValue("NAME")||"funcion")+"("+a.join(", ")+")";},
  expr(b){
   if(!b)return "0";const f=k=>b.getFieldValue(k),v=k=>this.val(b,k);
   switch(b.type){
@@ -36,7 +37,6 @@ const BD={
    default:this.warnings.push("Valor no compatible: "+b.type);return "0";
   }
  },
- call(b){let a=[];for(let i=0;i<20&&b.getInput("ARG"+i);i++)a.push(this.val(b,"ARG"+i));return this.safe(b.getFieldValue("NAME")||"funcion")+"("+a.join(", ")+")";},
  stmts(b,n){let out="";while(b){out+=this.stmt(b,n);b=b.getNextBlock();}return out;},
  stmt(b,n){
   const s=this.ind(n),f=k=>b.getFieldValue(k),v=k=>this.val(b,k);
@@ -51,9 +51,12 @@ const BD={
    case "arduino_break":return s+"break;\n";
    case "arduino_servo":this.headers.add("Servo.h");return s+"bd_servo_"+f("PIN")+".write(constrain("+v("ANGLE")+", 0, 180));\n";
    case "arduino_buzzer":return s+"tone("+f("PIN")+", "+v("FREQ")+", "+v("DURATION")+");\n";
-   case "arduino_serial_begin":return s+"Serial.begin("+f("BAUD")+");\n";\n   case "arduino_i2c_begin":this.headers.add("Wire.h");return s+"Wire.begin();\n";\n   case "arduino_spi_begin":this.headers.add("SPI.h");return s+"SPI.begin();\n";\n   case "arduino_variable":case "arduino_constant":return "";
+   case "arduino_serial_begin":return s+"Serial.begin("+f("BAUD")+");\n";
    case "arduino_serial_print":return s+"Serial."+f("METHOD")+"("+v("VALUE")+");\n";
-   case "arduino_lcd_init":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"// LCD I2C: revisa dirección y tamaño en la declaración de bd_lcd.\nbd_lcd.init();\nbd_lcd.backlight();\n";
+   case "arduino_i2c_begin":this.headers.add("Wire.h");return s+"Wire.begin();\n";
+   case "arduino_spi_begin":this.headers.add("SPI.h");return s+"SPI.begin();\n";
+   case "arduino_variable":case "arduino_constant":return "";
+   case "arduino_lcd_init":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"bd_lcd.init();\nbd_lcd.backlight();\n";
    case "arduino_lcd_print":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"bd_lcd.setCursor("+v("COL")+", "+v("ROW")+");\nbd_lcd.print("+v("TEXT")+");\n";
    case "arduino_lcd_clear":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"bd_lcd.clear();\n";
    case "controls_if":return this.ifStmt(b,n);
@@ -77,21 +80,32 @@ const BD={
  generate(){
   this.headers=new Set();this.warnings=[];this.errors=[];this.board=document.getElementById("boardSelect").value;
   const roots=workspace.getTopBlocks(true);this.validate(roots);if(this.errors.length)return {code:"",errors:this.errors,warnings:this.warnings};
-  const setup=roots.find(b=>b.type==="arduino_setup"),loop=roots.find(b=>b.type==="arduino_loop");
-  const all=workspace.getAllBlocks(false);
+  const setup=roots.find(b=>b.type==="arduino_setup"),loop=roots.find(b=>b.type==="arduino_loop"),all=workspace.getAllBlocks(false);
   if(all.some(b=>b.type==="arduino_servo"))this.headers.add("Servo.h");
   if(all.some(b=>["math_single","math_round","math_arithmetic"].includes(b.type)))this.headers.add("math.h");
+  if(all.some(b=>b.type==="arduino_i2c_begin"||b.type.startsWith("arduino_lcd_")))this.headers.add("Wire.h");
+  if(all.some(b=>b.type==="arduino_spi_begin"))this.headers.add("SPI.h");
+  if(all.some(b=>b.type.startsWith("arduino_lcd_")))this.headers.add("LiquidCrystal_I2C.h");
   let pre="";
   const servoPins=[...new Set(all.filter(b=>b.type==="arduino_servo").map(b=>b.getFieldValue("PIN")))];
-  if(servoPins.length)pre+=servoPins.map(p=>"Servo bd_servo_"+p+";").join("\\n")+"\\n\\n";
+  if(servoPins.length)pre+=servoPins.map(p=>"Servo bd_servo_"+p+";").join("\n")+"\n\n";
   if(all.some(b=>b.type==="arduino_ultrasonic"))pre+="long bd_readDistance(int trig, int echo) { pinMode(trig, OUTPUT); digitalWrite(trig, LOW); delayMicroseconds(2); digitalWrite(trig, HIGH); delayMicroseconds(10); digitalWrite(trig, LOW); pinMode(echo, INPUT); long us = pulseIn(echo, HIGH, 30000); return us == 0 ? -1 : us * 0.0343 / 2; }\n\n";
-  if(all.some(b=>["arduino_lcd_init","arduino_lcd_print","arduino_lcd_clear"].includes(b.type))){this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");pre+="// Ajusta dirección, columnas y filas según tu pantalla.\nLiquidCrystal_I2C bd_lcd(0x27, 16, 2);\n\n";}
+  const lcd=all.find(b=>b.type==="arduino_lcd_init");
+  if(all.some(b=>b.type.startsWith("arduino_lcd_"))){const addr=lcd?lcd.getFieldValue("ADDR"):"0x27",cols=lcd?lcd.getFieldValue("COLS"):"16",rows=lcd?lcd.getFieldValue("ROWS"):"2";pre+="LiquidCrystal_I2C bd_lcd("+addr+", "+cols+", "+rows+");\n\n";}
   let code=Array.from(this.headers).map(h=>"#include <"+h+">\n").join("")+(this.headers.size?"\n":"")+"// Generado con BlockDuino\n\n";
-  const vars=workspace.getAllVariables().map(v=>"auto "+this.safe(v.name)+" = 0; // Cambia el tipo si necesitas decimales o texto").join("\n");
-  if(vars)code+=vars+"\n\n";code+=pre+"void setup() {\n"+this.stmts(setup.getInputTargetBlock("DO"),1)+"}\n\nvoid loop() {\n"+this.stmts(loop.getInputTargetBlock("DO"),1)+"}\n";
-  if(roots.some(b=>!["arduino_setup","arduino_loop"].includes(b.type)))this.warnings.push("Hay bloques sueltos fuera de setup() y loop(); no se incluyeron.");
+  const declarations=all.filter(b=>b.type==="arduino_variable"||b.type==="arduino_constant").map(b=>(b.type==="arduino_constant"?"const ":"")+b.getFieldValue("TYPE")+" "+this.safe(b.getFieldValue("NAME"))+" = "+this.val(b,"VALUE")+";");
+  if(declarations.length)code+=declarations.join("\n")+"\n\n";
+  const declared=new Set(all.filter(b=>b.type==="arduino_variable"||b.type==="arduino_constant").map(b=>this.safe(b.getFieldValue("NAME"))));
+  const vars=workspace.getAllVariables().filter(v=>!declared.has(this.safe(v.name))).map(v=>"int "+this.safe(v.name)+" = 0;").join("\n");
+  if(vars)code+=vars+"\n\n";
+  const buttons=all.filter(b=>b.type==="arduino_button").map(b=>"  pinMode("+b.getFieldValue("PIN")+", "+b.getFieldValue("MODE")+");");
+  const servos=servoPins.map(p=>"  bd_servo_"+p+".attach("+p+");");
+  code+=pre+"void setup() {\n"+buttons.concat(servos).join("\n")+(buttons.length||servos.length?"\n":"")+this.stmts(setup.getInputTargetBlock("DO"),1)+"}\n\nvoid loop() {\n"+this.stmts(loop.getInputTargetBlock("DO"),1)+"}\n";
+  const functions=all.filter(b=>b.type==="procedures_defnoreturn"||b.type==="procedures_defreturn");
+  if(functions.length){let fn="";functions.forEach(b=>{let args=[];try{args=b.getVars?b.getVars():[];}catch(e){}const params=args.map(a=>"float "+this.safe(typeof a==="string"?a:a.name)).join(", ");const name=this.safe(b.getFieldValue("NAME")||"funcion");const returns=b.type==="procedures_defreturn";fn+=(returns?"float ":"void ")+name+"("+params+") {\n"+this.stmts(b.getInputTargetBlock("STACK"),1);if(returns)fn+="  return "+this.val(b,"RETURN")+";\n";fn+="}\n\n";});code=code.replace("void setup()",fn+"void setup()");}
+  if(roots.some(b=>!["arduino_setup","arduino_loop","procedures_defnoreturn","procedures_defreturn"].includes(b.type)))this.warnings.push("Hay bloques sueltos fuera de setup() y loop(); no se incluyeron.");
   return {code:code,errors:this.errors,warnings:this.warnings};
  }
 };
-function generateCode(){const r=BD.generate(),out=document.getElementById("output"),d=document.getElementById("diagnostics");if(r.errors.length){out.textContent="// Corrige los errores para generar.";d.className="diagnostics error";d.textContent="✖ "+r.errors.join(" ");return;}out.textContent=r.code;d.className=r.warnings.length?"diagnostics warn":"diagnostics";d.textContent=r.warnings.length?"⚠ "+r.warnings.join(" "):"✓ Código generado. Revisa el cableado y las librerías de tu circuito.";document.getElementById("codeInfo").textContent=document.getElementById("boardSelect").selectedOptions[0].text+" · C++";}
+function generateCode(){const r=BD.generate(),out=document.getElementById("output"),d=document.getElementById("diagnostics");if(r.errors.length){out.textContent="// Corrige los errores para generar.";d.className="diagnostics error";d.textContent="✖ "+r.errors.join(" ");return;}out.textContent=r.code;d.className=r.warnings.length?"diagnostics warn":"diagnostics";d.textContent=r.warnings.length?"⚠ "+r.warnings.join(" "):"✓ Código generado. Revisa cableado y librerías del circuito.";document.getElementById("codeInfo").textContent=document.getElementById("boardSelect").selectedOptions[0].text+" · C++";}
 function copyCode(){const t=document.getElementById("output").textContent;navigator.clipboard.writeText(t).then(()=>{document.getElementById("diagnostics").textContent="✓ Código copiado."}).catch(()=>{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();});}
