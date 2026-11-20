@@ -199,13 +199,13 @@ class BDParser {
     const code=this.tokens.join(" ");
     const setupAt=this.tokens.findIndex((t,i)=>t==="setup"&&this.tokens[i+1]==="(");
     const loopAt=this.tokens.findIndex((t,i)=>t==="loop"&&this.tokens[i+1]==="(");
-    if(setupAt<0||loopAt<0) throw new Error("Se necesitan las funciones setup() y loop().");
+
     const extract=(at)=>{
       let p=at;while(p<this.tokens.length&&this.tokens[p]!=="{")p++;
       if(p>=this.tokens.length)throw new Error("Falta el cuerpo de una función.");
       this.i=p;return this.blockBody();
     };
-    const setup=extract(setupAt),loop=extract(loopAt);
+    const setup=setupAt<0?null:extract(setupAt),loop=loopAt<0?null:extract(loopAt);
     return {setup,loop};
   }
 }
@@ -238,12 +238,12 @@ function importCppToBlocks(source) {
     }
     const parser=new BDParser(stripped);
     const parsed=parser.parse();
-    const setup=workspace.newBlock("arduino_setup");
-    const loop=workspace.newBlock("arduino_loop");
+    const setup=parsed.setup?workspace.newBlock("arduino_setup"):null;
+    const loop=parsed.loop?workspace.newBlock("arduino_loop"):null;
     if(parsed.setup) setup.getInput("DO").connection.connect(parsed.setup.previousConnection);
     if(parsed.loop) loop.getInput("DO").connection.connect(parsed.loop.previousConnection);
     workspace.getAllBlocks(false).forEach(b=>{if(!b.rendered)b.initSvg();b.render();});
-    setup.moveBy(70,55);loop.moveBy(70,250);
+    if(setup)setup.moveBy(70,55);if(loop)loop.moveBy(70,250);
     globalBlocks.forEach((b,index)=>b.moveBy(70,450+index*85));
     workspace.clearUndo();
   } catch(e) {
