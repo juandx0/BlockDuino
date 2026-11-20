@@ -50,7 +50,10 @@ class BDParser {
       const op=this.take(), right=this.expression(prec[op]+1);
       const type=({"||":"logic_operation","&&":"logic_operation","==":"logic_compare","!=":"logic_compare","<":"logic_compare",">":"logic_compare","<=":"logic_compare",">=":"logic_compare","+":"math_arithmetic","-":"math_arithmetic","*":"math_arithmetic","/":"math_arithmetic","%":"math_modulo"})[op];
       let b;
-      if(type==="logic_operation") b=this.make(type,{OP:op==="&&"?"AND":"OR"});
+      if(op==="+"&&(left.type==="text"||right.type==="text"||left.type==="text_join"||right.type==="text_join")) {
+        b=this.make("text_join");this.connectValue(b,"ADD0",left);this.connectValue(b,"ADD1",right);
+      }
+      else if(type==="logic_operation") b=this.make(type,{OP:op==="&&"?"AND":"OR"});
       else if(type==="logic_compare") b=this.make(type,{OP:({"==":"EQ","!=":"NEQ","<":"LT",">":"GT","<=":"LTE",">=":"GTE"})[op]});
       else if(type==="math_arithmetic") b=this.make(type,{OP:({"+":"ADD","-":"MINUS","*":"MULTIPLY","/":"DIVIDE"})[op]});
       else b=this.make(type);
@@ -99,6 +102,11 @@ class BDParser {
     if(name==="bd_readDistance") return this.make("arduino_ultrasonic",{TRIG:args[0]?.getFieldValue?.("NUM")||"7",ECHO:args[1]?.getFieldValue?.("NUM")||"8"});
     if(name==="pow") {const b=this.make("math_arithmetic",{OP:"POWER"});this.connectValue(b,"A",args[0]);this.connectValue(b,"B",args[1]);return b;}
     if(name==="random") {const b=this.make("math_random_int");this.connectValue(b,"FROM",args[0]);this.connectValue(b,"TO",args[1]);return b;}
+    if(name.endsWith(".length")) {
+      const variableName=name.slice(0,-".length".length);
+      const value=this.make("variables_get");value.setFieldValue(this.variable(variableName),"VAR");
+      const b=this.make("text_length");this.connectValue(b,"VALUE",value);return b;
+    }
     if(name==="Serial.available") return this.make("arduino_serial_available");
     if(name==="Serial.read") return this.make("arduino_serial_read");
     if(name==="map"||name==="constrain"||["sin","cos","tan"].includes(name)) {
