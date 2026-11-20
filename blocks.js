@@ -1,123 +1,45 @@
-
-Blockly.Blocks["arduino_setup"] = {
-  init: function() {
-    this.appendDummyInput().appendField("Al iniciar Arduino");
-    this.appendStatementInput("DO").appendField("hacer");
-    this.setColour("#E5A000");
-    this.setDeletable(false);
-  }
+// Bloques propios de BlockDuino. Los bloques estándar de Blockly cubren variables,
+// funciones, texto, lógica y matemáticas.
+const defineStatement = (type, label, colour, inputs=[]) => {
+  Blockly.Blocks[type] = {init:function(){
+    this.appendDummyInput().appendField(label);
+    for(const [name,field] of inputs) this.appendDummyInput().appendField(field[0]).appendField(field[1],name);
+    this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(colour);
+  }};
 };
+Blockly.Blocks.arduino_setup={init:function(){this.appendDummyInput().appendField("Al iniciar Arduino");this.appendStatementInput("DO").appendField("hacer");this.setColour(28);this.setDeletable(false);this.setMovable(false);}};
+Blockly.Blocks.arduino_loop={init:function(){this.appendDummyInput().appendField("Por siempre");this.appendStatementInput("DO").appendField("hacer");this.setColour(28);this.setDeletable(false);this.setMovable(false);}};
+Blockly.Blocks.arduino_pinmode={init:function(){this.appendDummyInput().appendField("Configurar pin").appendField(new Blockly.FieldNumber(13,0,69,1),"PIN").appendField("como").appendField(new Blockly.FieldDropdown([["Salida","OUTPUT"],["Entrada","INPUT"],["Entrada pullup","INPUT_PULLUP"]]),"MODE");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(210);}};
+Blockly.Blocks.arduino_digitalwrite={init:function(){this.appendDummyInput().appendField("Escribir pin digital").appendField(new Blockly.FieldNumber(13,0,69,1),"PIN").appendField("en").appendField(new Blockly.FieldDropdown([["HIGH / Encendido","HIGH"],["LOW / Apagado","LOW"]]),"STATE");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(210);}};
+Blockly.Blocks.arduino_analogwrite={init:function(){this.appendValueInput("VALUE").setCheck("Number").appendField("Salida PWM pin").appendField(new Blockly.FieldNumber(9,0,69,1),"PIN").appendField("valor");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(210);}};
+Blockly.Blocks.arduino_delay={init:function(){this.appendValueInput("TIME").setCheck("Number").appendField("Esperar (ms)");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(210);}};
+Blockly.Blocks.arduino_repeat={init:function(){this.appendValueInput("TIMES").setCheck("Number").appendField("Repetir");this.appendStatementInput("DO").appendField("veces, hacer");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(285);}};
+Blockly.Blocks.arduino_while={init:function(){this.appendValueInput("COND").setCheck("Boolean").appendField("Mientras");this.appendStatementInput("DO").appendField("hacer");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(285);}};
+Blockly.Blocks.arduino_repeat_until={init:function(){this.appendValueInput("COND").setCheck("Boolean").appendField("Repetir hasta que");this.appendStatementInput("DO").appendField("hacer");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(285);}};
+Blockly.Blocks.arduino_break={init:function(){this.appendDummyInput().appendField("Salir del bucle");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(285);}};
+Blockly.Blocks.arduino_analogread={init:function(){this.appendDummyInput().appendField("Leer entrada analógica").appendField(new Blockly.FieldDropdown([["A0","A0"],["A1","A1"],["A2","A2"],["A3","A3"],["A4","A4"],["A5","A5"],["A6","A6"],["A7","A7"]]),"PIN");this.setOutput(true,"Number");this.setColour(195);}};
+Blockly.Blocks.arduino_digitalread={init:function(){this.appendDummyInput().appendField("Leer pin digital").appendField(new Blockly.FieldNumber(2,0,69,1),"PIN");this.setOutput(true,"Number");this.setColour(195);}};
+Blockly.Blocks.arduino_button={init:function(){this.appendDummyInput().appendField("Estado del botón (pin)").appendField(new Blockly.FieldNumber(2,0,69,1),"PIN").appendField(new Blockly.FieldDropdown([["pull-up (pulsado = LOW)","INPUT_PULLUP"],["normal (pulsado = HIGH)","INPUT"]]),"MODE");this.setOutput(true,"Boolean");this.setColour(195);}};
+Blockly.Blocks.arduino_potentiometer={init:function(){this.appendDummyInput().appendField("Leer potenciómetro").appendField(new Blockly.FieldDropdown([["A0","A0"],["A1","A1"],["A2","A2"],["A3","A3"],["A4","A4"],["A5","A5"]]),"PIN");this.setOutput(true,"Number");this.setColour(195);}};
+Blockly.Blocks.arduino_ultrasonic={init:function(){this.appendDummyInput().appendField("Distancia ultrasónica TRIG").appendField(new Blockly.FieldNumber(7,0,69,1),"TRIG").appendField("ECHO").appendField(new Blockly.FieldNumber(8,0,69,1),"ECHO");this.setOutput(true,"Number");this.setColour(195);}};
+Blockly.Blocks.arduino_temperature={init:function(){this.appendDummyInput().appendField("Temperatura (sensor analógico) pin").appendField(new Blockly.FieldDropdown([["A0","A0"],["A1","A1"],["A2","A2"],["A3","A3"],["A4","A4"],["A5","A5"]]),"PIN").appendField("tipo").appendField(new Blockly.FieldDropdown([["TMP36","TMP36"],["LM35","LM35"]]),"KIND");this.setOutput(true,"Number");this.setColour(195);}};
+Blockly.Blocks.arduino_servo={init:function(){this.appendDummyInput().appendField("Servo en pin").appendField(new Blockly.FieldNumber(9,0,69,1),"PIN");this.appendValueInput("ANGLE").setCheck("Number").appendField("ángulo (0-180)");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(25);}};
+Blockly.Blocks.arduino_buzzer={init:function(){this.appendDummyInput().appendField("Buzzer pin").appendField(new Blockly.FieldNumber(8,0,69,1),"PIN");this.appendValueInput("FREQ").setCheck("Number").appendField("frecuencia (Hz)");this.appendValueInput("DURATION").setCheck("Number").appendField("duración (ms)");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(25);}};
+Blockly.Blocks.arduino_map={init:function(){this.appendValueInput("VALUE").setCheck("Number").appendField("Convertir valor");this.appendValueInput("FROM1").setCheck("Number").appendField("desde");this.appendValueInput("FROM2").setCheck("Number").appendField("hasta");this.appendValueInput("TO1").setCheck("Number").appendField("a");this.appendValueInput("TO2").setCheck("Number").appendField("hasta");this.setOutput(true,"Number");this.setColour(230);}};
+Blockly.Blocks.arduino_constrain={init:function(){this.appendValueInput("VALUE").setCheck("Number").appendField("Limitar valor");this.appendValueInput("LOW").setCheck("Number").appendField("mínimo");this.appendValueInput("HIGH").setCheck("Number").appendField("máximo");this.setOutput(true,"Number");this.setColour(230);}};
+Blockly.Blocks.arduino_trig={init:function(){this.appendDummyInput().appendField(new Blockly.FieldDropdown([["sin","sin"],["cos","cos"],["tan","tan"]]),"FN").appendField("de (radianes)");this.appendValueInput("VALUE").setCheck("Number");this.setOutput(true,"Number");this.setColour(230);}};
+Blockly.Blocks.arduino_serial_begin={init:function(){this.appendDummyInput().appendField("Iniciar Serial a").appendField(new Blockly.FieldDropdown([["9600","9600"],["19200","19200"],["38400","38400"],["57600","57600"],["115200","115200"]]),"BAUD").appendField("baudios");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(160);}};
+Blockly.Blocks.arduino_serial_print={init:function(){this.appendValueInput("VALUE").appendField("Serial").appendField(new Blockly.FieldDropdown([["imprimir","print"],["imprimir línea","println"]]),"METHOD");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(160);}};
+Blockly.Blocks.arduino_serial_available={init:function(){this.appendDummyInput().appendField("Hay datos en Serial");this.setOutput(true,"Boolean");this.setColour(160);}};
+Blockly.Blocks.arduino_serial_read={init:function(){this.appendDummyInput().appendField("Leer byte de Serial");this.setOutput(true,"Number");this.setColour(160);}};
+Blockly.Blocks.arduino_lcd_init={init:function(){this.appendDummyInput().appendField("LCD I2C dirección").appendField(new Blockly.FieldTextInput("0x27"),"ADDR").appendField("columnas").appendField(new Blockly.FieldNumber(16,1,40,1),"COLS").appendField("filas").appendField(new Blockly.FieldNumber(2,1,4,1),"ROWS");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(330);}};
+Blockly.Blocks.arduino_lcd_print={init:function(){this.appendValueInput("TEXT").appendField("LCD mostrar texto");this.appendValueInput("COL").setCheck("Number").appendField("columna");this.appendValueInput("ROW").setCheck("Number").appendField("fila");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(330);}};
+Blockly.Blocks.arduino_lcd_clear={init:function(){this.appendDummyInput().appendField("Limpiar LCD");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(330);}};
 
-Blockly.Blocks["arduino_loop"] = {
-  init: function() {
-    this.appendDummyInput().appendField("Por siempre");
-    this.appendStatementInput("DO").appendField("hacer");
-    this.setColour("#E5A000");
-    this.setDeletable(false);
-  }
-};
+// Declaraciones globales tipadas y constantes.
+Blockly.Blocks.arduino_variable={init:function(){this.appendDummyInput().appendField("Crear variable").appendField(new Blockly.FieldDropdown([["entero int","int"],["decimal float","float"],["booleano bool","bool"],["texto String","String"]]),"TYPE").appendField("llamada").appendField(new Blockly.FieldTextInput("miVariable"),"NAME");this.appendValueInput("VALUE").appendField("valor inicial");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(120);}};
+Blockly.Blocks.arduino_constant={init:function(){this.appendDummyInput().appendField("Crear constante").appendField(new Blockly.FieldDropdown([["entero int","int"],["decimal float","float"],["booleano bool","bool"],["texto String","String"]]),"TYPE").appendField("llamada").appendField(new Blockly.FieldTextInput("MI_CONSTANTE"),"NAME");this.appendValueInput("VALUE").appendField("valor");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(120);}};
+Blockly.Blocks.arduino_i2c_begin={init:function(){this.appendDummyInput().appendField("Iniciar bus I2C");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(160);}};
+Blockly.Blocks.arduino_spi_begin={init:function(){this.appendDummyInput().appendField("Iniciar bus SPI");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(160);}};
 
-Blockly.Blocks["arduino_pinmode"] = {
-  init: function() {
-    this.appendDummyInput()
-      .appendField("Configurar pin")
-      .appendField(new Blockly.FieldNumber(13, 0, 255, 1), "PIN")
-      .appendField("como")
-      .appendField(new Blockly.FieldDropdown([
-        ["Salida", "OUTPUT"],
-        ["Entrada", "INPUT"],
-        ["Entrada pullup", "INPUT_PULLUP"]
-      ]), "MODE");
-
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setColour("#2196F3");
-  }
-};
-
-Blockly.Blocks["arduino_digitalwrite"] = {
-  init: function() {
-    this.appendDummyInput()
-      .appendField("Escribir pin digital")
-      .appendField(new Blockly.FieldNumber(13, 0, 255, 1), "PIN")
-      .appendField("en")
-      .appendField(new Blockly.FieldDropdown([
-        ["HIGH", "HIGH"],
-        ["LOW", "LOW"]
-      ]), "STATE");
-
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setColour("#2196F3");
-  }
-};
-
-Blockly.Blocks["arduino_analogwrite"] = {
-  init: function() {
-    this.appendValueInput("VALUE")
-      .setCheck("Number")
-      .appendField("Escribir PWM en pin")
-      .appendField(new Blockly.FieldNumber(9, 0, 255, 1), "PIN")
-      .appendField("valor");
-
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setColour("#2196F3");
-  }
-};
-
-Blockly.Blocks["arduino_delay"] = {
-  init: function() {
-    this.appendValueInput("TIME")
-      .setCheck("Number")
-      .appendField("Esperar")
-      .appendField("milisegundos");
-
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setColour("#2196F3");
-  }
-};
-
-Blockly.Blocks["arduino_repeat"] = {
-  init: function() {
-    this.appendDummyInput()
-      .appendField("Repetir")
-      .appendField(new Blockly.FieldNumber(10, 0), "TIMES")
-      .appendField("veces");
-
-    this.appendStatementInput("DO").appendField("hacer");
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setColour("#9C27B0");
-  }
-};
-
-Blockly.Blocks["arduino_analogread"] = {
-  init: function() {
-    this.appendDummyInput()
-      .appendField("Leer entrada analógica")
-      .appendField(new Blockly.FieldDropdown([
-        ["A0", "A0"],
-        ["A1", "A1"],
-        ["A2", "A2"],
-        ["A3", "A3"],
-        ["A4", "A4"],
-        ["A5", "A5"]
-      ]), "PIN");
-
-    this.setOutput(true, "Number");
-    this.setColour("#2196F3");
-  }
-};
-
-Blockly.Blocks["arduino_digitalread"] = {
-  init: function() {
-    this.appendDummyInput()
-      .appendField("Leer entrada digital")
-      .appendField(new Blockly.FieldNumber(2, 0, 255, 1), "PIN");
-
-    this.setOutput(true, "Number");
-    this.setColour("#2196F3");
-  }
-};
+Blockly.Blocks.arduino_assign={init:function(){this.appendDummyInput().appendField("Cambiar variable").appendField(new Blockly.FieldTextInput("miVariable"),"NAME");this.appendValueInput("VALUE").appendField("nuevo valor");this.setPreviousStatement(true);this.setNextStatement(true);this.setColour(120);}};
