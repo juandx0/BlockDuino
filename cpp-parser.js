@@ -66,7 +66,7 @@ class BDParser {
     if(this.eat("!")){const b=this.make("logic_negate");this.connectValue(b,"BOOL",this.primary());return b;}
     const t=this.take();
     if(!t) throw new Error("Expresión incompleta.");
-    if(/^\\d/.test(t)) return this.make("math_number",{NUM:t});
+    if(/^\d/.test(t)) return this.make("math_number",{NUM:t});
     if(t.startsWith('"')) return this.make("text",{TEXT:JSON.parse(t)});
     if(t==="true"||t==="false") return this.make("logic_boolean",{BOOL:t.toUpperCase()});
     if(t==="HIGH"||t==="LOW") return this.make("math_number",{NUM:t==="HIGH"?"1":"0"});
