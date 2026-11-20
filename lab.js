@@ -33,7 +33,7 @@
   async function checkAiService(){
     try{
       const r=await fetch("/api/assistant",{method:"GET"});
-      if(r.ok){$("bdAssistantStatus").textContent="✓ Servicio de IA disponible.";return;}
+      if(r.ok){const info=await r.json();$("bdAssistantStatus").textContent=info.configured?"✓ Servicio de IA disponible.":"El backend responde, pero falta OPENAI_API_KEY en el servidor.";return;}
       $("bdAssistantStatus").textContent="El asistente necesita configurar el backend /api/assistant. Consulta README_AI.md.";
     }catch(e){$("bdAssistantStatus").textContent="Backend de IA no disponible en este alojamiento. Consulta README_AI.md para desplegarlo.";}
   }
