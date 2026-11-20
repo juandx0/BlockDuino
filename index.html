@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,54 +6,146 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BlockDuino</title>
   <link rel="stylesheet" href="style.css">
-
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
 </head>
-
 <body>
+
   <header>
-    <h1>⚡ BlockDuino</h1>
-    <p>Programa Arduino con bloques visuales</p>
+    <div>
+      <h1>⚡ BlockDuino</h1>
+      <p>Programación visual para Arduino</p>
+    </div>
+
+    <button id="helpButton" onclick="toggleGuide()">
+      ? Guía
+    </button>
   </header>
 
-  <main>
+  <main id="workspace">
+
     <section class="editor">
       <div class="toolbar">
-        <h2>Editor de bloques</h2>
-        <button onclick="generateCode()">Generar C++</button>
+        <h2>Bloques</h2>
       </div>
-
       <div id="blocklyDiv"></div>
     </section>
 
+    <div id="splitter" title="Arrastra para cambiar el tamaño"></div>
+
     <section class="code">
       <div class="toolbar">
-        <h2>Código Arduino</h2>
-        <button onclick="copyCode()">Copiar código</button>
+        <h2>Código C++</h2>
+        <div class="actions">
+          <button onclick="generateCode()">Generar</button>
+          <button onclick="copyCode()">Copiar</button>
+        </div>
       </div>
 
-      <pre><code id="output">// Tu código aparecerá aquí</code></pre>
+      <pre><code id="output">// ¡Construye tu programa con bloques!</code></pre>
     </section>
+
   </main>
 
+  <div id="guideOverlay" class="overlay" onclick="closeGuideOutside(event)">
+    <div class="guide">
+      <button class="closeButton" onclick="toggleGuide()">✕</button>
+
+      <h2>📚 Guía para usuarios de micro:bit</h2>
+      <p>¿Vienes de Microsoft MakeCode? Aquí tienes las equivalencias.</p>
+
+      <h3>Conceptos básicos</h3>
+
+      <div class="guideItem">
+        <strong>Al iniciar Arduino</strong>
+        <p>Equivale a los bloques de inicio. Se ejecuta una sola vez.</p>
+        <code>void setup() { }</code>
+      </div>
+
+      <div class="guideItem">
+        <strong>Por siempre</strong>
+        <p>Equivale al bloque para siempre de micro:bit. Se repite constantemente.</p>
+        <code>void loop() { }</code>
+      </div>
+
+      <div class="guideItem">
+        <strong>Esperar milisegundos</strong>
+        <p>En micro:bit puedes encontrar una pausa en milisegundos.</p>
+        <code>delay(1000);</code>
+      </div>
+
+      <h3>Equivalencias de hardware</h3>
+
+      <div class="guideItem">
+        <strong>Leer un pin analógico</strong>
+        <p>Lee valores de sensores analógicos. En Arduino UNO normalmente devuelve valores de 0 a 1023.</p>
+        <code>analogRead(A0)</code>
+      </div>
+
+      <div class="guideItem">
+        <strong>Leer un pin digital</strong>
+        <p>Lee si una entrada digital está HIGH o LOW.</p>
+        <code>digitalRead(2)</code>
+      </div>
+
+      <div class="guideItem">
+        <strong>Escribir un pin digital</strong>
+        <p>Enciende o apaga una salida.</p>
+        <code>digitalWrite(13, HIGH);</code>
+      </div>
+
+      <div class="guideItem">
+        <strong>Salida analógica PWM</strong>
+        <p>Controla una salida PWM. En Arduino UNO utiliza valores de 0 a 255.</p>
+        <code>analogWrite(9, 128);</code>
+      </div>
+
+      <h3>Matemáticas y lógica</h3>
+      <ul>
+        <li><strong>+</strong> Sumar.</li>
+        <li><strong>-</strong> Restar.</li>
+        <li><strong>×</strong> Multiplicar.</li>
+        <li><strong>÷</strong> Dividir.</li>
+        <li><strong>=, !=, &lt;, &gt;</strong> Comparar valores.</li>
+        <li><strong>AND</strong> Ambas condiciones deben cumplirse.</li>
+        <li><strong>OR</strong> Al menos una condición debe cumplirse.</li>
+        <li><strong>NOT</strong> Invierte una condición.</li>
+      </ul>
+
+      <h3>Una diferencia importante</h3>
+      <p>Arduino no tiene los mismos pines ni las mismas capacidades que micro:bit. Comprueba siempre qué placa estás usando en Tinkercad.</p>
+    </div>
+  </div>
+
   <xml id="toolbox" style="display:none">
+
     <category name="Arduino" colour="#009688">
       <block type="arduino_setup"></block>
       <block type="arduino_loop"></block>
       <block type="arduino_pinmode"></block>
       <block type="arduino_digitalwrite"></block>
+      <block type="arduino_analogwrite"></block>
       <block type="arduino_delay"></block>
       <block type="arduino_repeat"></block>
     </category>
 
-    <category name="Lógica" categorystyle="logic_category">
-      <block type="controls_if"></block>
+    <category name="Entradas" colour="#2196F3">
+      <block type="arduino_analogread"></block>
+      <block type="arduino_digitalread"></block>
     </category>
 
-    <category name="Matemáticas" categorystyle="math_category">
+    <category name="Lógica" colour="#5C81A6">
+      <block type="controls_if"></block>
+      <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
+      <block type="logic_boolean"></block>
+      <block type="logic_negate"></block>
+    </category>
+
+    <category name="Matemáticas" colour="#5C68A6">
       <block type="math_number"></block>
       <block type="math_arithmetic"></block>
     </category>
+
   </xml>
 
   <script src="blocks.js"></script>
@@ -74,6 +167,66 @@
         snap: true
       }
     });
+
+    function toggleGuide() {
+      const guide = document.getElementById("guideOverlay");
+      guide.classList.toggle("visible");
+    }
+
+    function closeGuideOutside(event) {
+      if (event.target.id === "guideOverlay") {
+        toggleGuide();
+      }
+    }
+
+    // Paneles ajustables
+    const splitter = document.getElementById("splitter");
+    const main = document.getElementById("workspace");
+
+    let dragging = false;
+
+    splitter.addEventListener("pointerdown", (event) => {
+      dragging = true;
+      splitter.setPointerCapture(event.pointerId);
+      document.body.classList.add("resizing");
+    });
+
+    splitter.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+
+      if (window.innerWidth > 750) {
+        const rect = main.getBoundingClientRect();
+        const position = event.clientX - rect.left;
+        const percentage = Math.max(
+          20,
+          Math.min(80, position / rect.width * 100)
+        );
+
+        main.style.gridTemplateColumns =
+          `${percentage}fr 8px ${100 - percentage}fr`;
+      } else {
+        const rect = main.getBoundingClientRect();
+        const position = event.clientY - rect.top;
+        const percentage = Math.max(
+          20,
+          Math.min(80, position / rect.height * 100)
+        );
+
+        main.style.gridTemplateRows =
+          `${percentage}fr 8px ${100 - percentage}fr`;
+      }
+
+      Blockly.svgResize(workspace);
+    });
+
+    function stopDragging() {
+      dragging = false;
+      document.body.classList.remove("resizing");
+    }
+
+    splitter.addEventListener("pointerup", stopDragging);
+    splitter.addEventListener("pointercancel", stopDragging);
   </script>
+
 </body>
 </html>
