@@ -106,7 +106,7 @@ const BD={
   code+=pre+"void setup() {\n"+buttons.concat(servos).join("\n")+(buttons.length||servos.length?"\n":"")+this.stmts(setup.getInputTargetBlock("DO"),1)+"}\n\nvoid loop() {\n"+this.stmts(loop.getInputTargetBlock("DO"),1)+"}\n";
   const functions=all.filter(b=>b.type==="procedures_defnoreturn"||b.type==="procedures_defreturn");
   if(functions.length){let fn="";functions.forEach(b=>{let args=[];try{args=b.getVars?b.getVars():[];}catch(e){}const params=args.map(a=>"float "+this.safe(typeof a==="string"?a:a.name)).join(", ");const name=this.safe(b.getFieldValue("NAME")||"funcion");const returns=b.type==="procedures_defreturn";fn+=(returns?"float ":"void ")+name+"("+params+") {\n"+this.stmts(b.getInputTargetBlock("STACK"),1);if(returns)fn+="  return "+this.val(b,"RETURN")+";\n";fn+="}\n\n";});code=code.replace("void setup()",fn+"void setup()");}
-  if(roots.some(b=>!["arduino_setup","arduino_loop","procedures_defnoreturn","procedures_defreturn"].includes(b.type)))this.warnings.push("Hay bloques sueltos fuera de setup() y loop(); no se incluyeron.");
+  if(roots.some(b=>!["arduino_setup","arduino_loop","arduino_variable","arduino_constant","procedures_defnoreturn","procedures_defreturn"].includes(b.type)))this.warnings.push("Hay bloques sueltos fuera de setup() y loop(); no se incluyeron.");
   return {code:code,errors:this.errors,warnings:this.warnings};
  }
 };
