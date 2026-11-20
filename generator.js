@@ -49,9 +49,9 @@ const BD={
    case "arduino_while":return s+"while ("+v("COND")+") {\n"+this.stmts(b.getInputTargetBlock("DO"),n+1)+s+"}\n";
    case "arduino_repeat_until":return s+"while (!("+v("COND")+")) {\n"+this.stmts(b.getInputTargetBlock("DO"),n+1)+s+"}\n";
    case "arduino_break":return s+"break;\n";
-   case "arduino_servo":this.headers.add("Servo.h");return s+"bd_servo_"+f("PIN")+".attach("+f("PIN")+");\n"+s+"bd_servo_"+f("PIN")+".write(constrain("+v("ANGLE")+", 0, 180));\n";
+   case "arduino_servo":this.headers.add("Servo.h");return s+"bd_servo_"+f("PIN")+".write(constrain("+v("ANGLE")+", 0, 180));\n";
    case "arduino_buzzer":return s+"tone("+f("PIN")+", "+v("FREQ")+", "+v("DURATION")+");\n";
-   case "arduino_serial_begin":return s+"Serial.begin("+f("BAUD")+");\n";
+   case "arduino_serial_begin":return s+"Serial.begin("+f("BAUD")+");\n";\n   case "arduino_i2c_begin":this.headers.add("Wire.h");return s+"Wire.begin();\n";\n   case "arduino_spi_begin":this.headers.add("SPI.h");return s+"SPI.begin();\n";\n   case "arduino_variable":case "arduino_constant":return "";
    case "arduino_serial_print":return s+"Serial."+f("METHOD")+"("+v("VALUE")+");\n";
    case "arduino_lcd_init":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"// LCD I2C: revisa dirección y tamaño en la declaración de bd_lcd.\nbd_lcd.init();\nbd_lcd.backlight();\n";
    case "arduino_lcd_print":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"bd_lcd.setCursor("+v("COL")+", "+v("ROW")+");\nbd_lcd.print("+v("TEXT")+");\n";
