@@ -20,7 +20,8 @@ class BDParser {
   }
   variable(name) {
     if (!this.variables.has(name)) {
-      const map=workspace.getVariableMap?.();\n      const model=map?.getVariable?.(name) || map?.createVariable?.(name) || workspace.createVariable(name);
+      const map=workspace.getVariableMap?.();
+      const model=map?.getVariable?.(name) || map?.createVariable?.(name) || workspace.createVariable(name);
       this.variables.set(name,model.getId());
     }
     return this.variables.get(name);
