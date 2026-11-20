@@ -196,26 +196,43 @@ class BDParser {
   }
 }
 function importCppToBlocks(source) {
-  // Ignora cabeceras, comentarios y funciones auxiliares; solo reconstruye setup/loop.
-  const clean=source.replace(/^\\s*#include[^\\n]*$/gm,"").replace(/\\/\\*[\\s\\S]*?\\*\\//g,"").replace(/\\/\\/[^\\n]*/g,"");
-  const parser=new BDParser(clean);
-  const parsed=parser.parse();
-  const old=workspace.getTopBlocks(false);
+  // Solo reconstruye el subconjunto que BlockDuino puede representar.
+  const clean=source
+    .replace(/^\\s*#include[^\\n]*$/gm,"")
+    .replace(/\\/\\*[\\s\\S]*?\\*\\//g,"")
+    .replace(/\\/\\/[^\\n]*/g,"");
+  const previous=Blockly.serialization.workspaces.save(workspace);
   Blockly.Events.disable();
   try {
     workspace.clear();
-    const setup=workspace.newBlock("arduino_setup"),loop=workspace.newBlock("arduino_loop");
-    setup.initSvg();loop.initSvg();
-    if(parsed.setup)setup.getInput("DO").connection.connect(parsed.setup.previousConnection);
-    if(parsed.loop)loop.getInput("DO").connection.connect(parsed.loop.previousConnection);
-    setup.moveBy(70,55);loop.moveBy(70,250);
+    const globals=[...clean.matchAll(/\\b(const\\s+)?(int|float|bool|String)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*([^;]+);/g)];
+    const stripped=clean
+      .replace(/\\b(?:const\\s+)?(?:int|float|bool|String)\\s+[A-Za-z_][A-Za-z0-9_]*\\s*=\\s*[^;]+;/g,"")
+      .replace(/\\bServo\\s+bd_servo_\\d+\\s*;/g,"")
+      .replace(/\\bLiquidCrystal_I2C\\s+bd_lcd\\s*\\([^;]*\\);/g,"");
+    for(const g of globals) {
+      const b=workspace.newBlock(g[1]?"arduino_constant":"arduino_variable");
+      b.setFieldValue(g[2],"TYPE");b.setFieldValue(g[3],"NAME");
+      const valueParser=new BDParser(g[4]);
+      const value=valueParser.expression();
+      b.getInput("VALUE").connection.connect(value.outputConnection);
+    }
+    const parser=new BDParser(stripped);
+    const parsed=parser.parse();
+    const setup=workspace.newBlock("arduino_setup");
+    const loop=workspace.newBlock("arduino_loop");
+    if(parsed.setup) setup.getInput("DO").connection.connect(parsed.setup.previousConnection);
+    if(parsed.loop) loop.getInput("DO").connection.connect(parsed.loop.previousConnection);
     workspace.getAllBlocks(false).forEach(b=>{if(!b.rendered)b.initSvg();b.render();});
+    setup.moveBy(70,55);loop.moveBy(70,250);
+    workspace.clearUndo();
   } catch(e) {
     workspace.clear();
-    old.forEach(b=>{});
+    Blockly.serialization.workspaces.load(previous,workspace);
     throw e;
-  } finally { Blockly.Events.enable(); }
-  workspace.clearUndo();
+  } finally {
+    Blockly.Events.enable();
+  }
   Blockly.svgResize(workspace);
   generateCode({fromBlocks:true});
 }
