@@ -1,5 +1,6 @@
 
 function generateCode() {
+  let code = "#include <math.h>\n\n// Generado con BlockDuino\n\n";
   const roots = workspace.getTopBlocks(true);
 
   const setup = roots.find(b => b.type === "arduino_setup");
