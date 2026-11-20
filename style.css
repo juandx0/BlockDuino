@@ -18,3 +18,31 @@ body.light #output{color:#17664f}
 body.light .code .CodeMirror{background:#f3f7fb;color:#172337}
 body.light .code .CodeMirror-gutters{background:#e7edf5;border-color:#d5dfeb}
 body.light .code .CodeMirror-linenumber{color:#7a899d}
+
+/* BlockDuino Lab */
+.bdLabOverlay{display:none;position:fixed;inset:0;z-index:60;background:#020817dd;align-items:center;justify-content:center;padding:18px}
+.bdLabOverlay.visible{display:flex}
+.bdLabWindow{width:min(760px,100%);max-height:90vh;overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 80px #0009}
+.bdLabHead{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.bdLabHead small{font-size:9px;letter-spacing:1.5px;color:var(--muted);font-weight:800}
+.bdLabHead h2{margin:4px 0 0;font-size:20px}
+.bdLabClose{padding:7px 10px}
+.bdLabBody{padding:18px 20px}
+.bdLabBody p{font-size:13px;line-height:1.5;color:var(--muted)}
+.bdLabBody textarea{width:100%;resize:vertical;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px;font:13px/1.5 inherit}
+.bdLabActions,.bdSimToolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.bdLabHint{font-size:11px!important;color:var(--muted)!important}
+.bdSimToolbar label{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.bdSimToolbar select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:8px}
+.bdSimBoard{min-height:190px;padding:16px;border-radius:12px;background:linear-gradient(135deg,#163d37,#142b3d);border:1px solid #2b665d;color:#eafff8}
+.bdBoardTitle{font-size:11px;letter-spacing:2px;font-weight:800}
+.bdBoardChip{margin:15px auto;width:170px;text-align:center;padding:14px 8px;border-radius:7px;background:#101820;border:2px solid #51616b;color:#9cabb6;font:11px monospace}
+.bdParts{display:flex;gap:9px;flex-wrap:wrap}
+.bdPart{display:flex;align-items:center;gap:9px;padding:9px 11px;background:#0d2027;border:1px solid #35675d;border-radius:9px;min-width:190px}
+.bdPartIcon{font-size:25px;color:#63766e}.bdPartIcon.lit{color:#ffe56a;text-shadow:0 0 14px #ffdf42}
+.bdPart small{display:block;color:#a4c8bd;font-size:10px;margin-top:3px}
+.bdPartState{font-size:9px;color:#b9d2c9}.bdPart button{font-size:9px;padding:6px 8px}.bdRemove{margin-left:auto!important}
+.bdSimStatus,.bdSimLog{padding:10px 12px;border-radius:8px;background:var(--bg);font-size:11px;margin-top:9px;white-space:pre-wrap;color:var(--text)}
+.bdSimLog{color:var(--muted);line-height:1.5}
+body.light .bdLabWindow{color:#172337}
+@media(max-width:550px){.bdLabBody{padding:13px}.bdLabHead{padding:13px}.bdPart{min-width:100%}}
