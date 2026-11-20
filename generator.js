@@ -4,7 +4,9 @@ const BD={
  ind:n=>"  ".repeat(n),
  val(b,k){const x=b.getInputTargetBlock(k);return x?this.expr(x):"0";},
  safe(s){let x=String(s||"variable").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9_]/g,"_");if(!/^[a-zA-Z_]/.test(x))x="_"+x;return x;},
- variable(id){const v=workspace.getVariableById(id);return v?this.safe(v.name):"variable";},
+ getVariable(id){const map=workspace.getVariableMap?.();return map?.getVariableById?.(id)||workspace.getVariableById?.(id)||null;},
+ getVariables(){const map=workspace.getVariableMap?.();return map?.getAllVariables?.()||workspace.getAllVariables?.()||[];},
+ variable(id){const v=this.getVariable(id);return v?this.safe(v.name):"variable";},
  call(b){let a=[];for(let i=0;i<20&&b.getInput("ARG"+i);i++)a.push(this.val(b,"ARG"+i));return this.safe(b.getFieldValue("NAME")||"funcion")+"("+a.join(", ")+")";},
  expr(b){
   if(!b)return "0";const f=k=>b.getFieldValue(k),v=k=>this.val(b,k);
@@ -97,7 +99,7 @@ const BD={
   const declarations=all.filter(b=>b.type==="arduino_variable"||b.type==="arduino_constant").map(b=>(b.type==="arduino_constant"?"const ":"")+b.getFieldValue("TYPE")+" "+this.safe(b.getFieldValue("NAME"))+" = "+this.val(b,"VALUE")+";");
   if(declarations.length)code+=declarations.join("\n")+"\n\n";
   const declared=new Set(all.filter(b=>b.type==="arduino_variable"||b.type==="arduino_constant").map(b=>this.safe(b.getFieldValue("NAME"))));
-  const vars=workspace.getAllVariables().filter(v=>!declared.has(this.safe(v.name))).map(v=>"int "+this.safe(v.name)+" = 0;").join("\n");
+  const vars=this.getVariables().filter(v=>!declared.has(this.safe(v.name))).map(v=>"int "+this.safe(v.name)+" = 0;").join("\n");
   if(vars)code+=vars+"\n\n";
   const buttons=all.filter(b=>b.type==="arduino_button").map(b=>"  pinMode("+b.getFieldValue("PIN")+", "+b.getFieldValue("MODE")+");");
   const servos=servoPins.map(p=>"  bd_servo_"+p+".attach("+p+");");
