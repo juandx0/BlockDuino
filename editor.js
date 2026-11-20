@@ -64,6 +64,7 @@ function initCodeEditor(){
     }
   });
   window.codeEditor.setSize("100%","100%");
+  window.codeEditor.on("focus",()=>{window.BDManualMode=true;const d=document.getElementById("diagnostics");d.className="diagnostics warn";d.textContent="✎ Edición manual: sincronización pausada. Pulsa «Sincronizar» para volver a generar desde los bloques.";});
   window.codeEditor.on("inputRead",cm=>{
     const c=cm.getCursor(),t=cm.getTokenAt(c);
     if(t.string&&/[A-Za-z_]/.test(t.string[0]))CodeMirror.showHint(cm,bdCppHints,{completeSingle:false});
