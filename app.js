@@ -25,7 +25,7 @@ function searchBlocks(q){
  workspace.updateToolbox(root);
 }
 function initUI(){
- $("output").addEventListener("input",()=>{clearTimeout(codeImportTimer);codeImportTimer=setTimeout(()=>{try{syncingFromCode=true;importCppToBlocks($("output").value);saveLocal();setStatus("Código convertido a bloques");}catch(e){const d=$("diagnostics");d.className="diagnostics warn";d.textContent="⚠ C++ no compatible todavía: "+e.message+" (se conserva el diagrama anterior).";}finally{syncingFromCode=false;}},850);});
+ window.onCppEditorChange=(code)=>{clearTimeout(codeImportTimer);codeImportTimer=setTimeout(()=>{try{syncingFromCode=true;importCppToBlocks(code);saveLocal();setStatus("Código convertido a bloques");}catch(e){const d=$("diagnostics");d.className="diagnostics warn";d.textContent="⚠ C++ no compatible todavía: "+e.message+" (se conserva el diagrama anterior).";}finally{syncingFromCode=false;}},850);};\n initCodeEditor();
  $("helpButton").onclick=()=>showGuide(true);$("closeGuide").onclick=()=>showGuide(false);$("guideOverlay").onclick=e=>{if(e.target===$("guideOverlay"))showGuide(false);};
  $("generateButton").onclick=generateCode;$("copyButton").onclick=copyCode;$("saveButton").onclick=saveProject;$("loadButton").onclick=()=>{if(loadLocal())generateCode();else alert("No hay un proyecto guardado en este navegador.");};
  $("exportButton").onclick=exportProject;$("importButton").onclick=()=>$("fileInput").click();$("fileInput").onchange=e=>{if(e.target.files[0])importProject(e.target.files[0]);e.target.value="";};
