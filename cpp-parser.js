@@ -227,8 +227,10 @@ function importCppToBlocks(source) {
       .replace(/\b(?:const\s+)?(?:int|float|bool|String)\s+[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^;]+;/g,"")
       .replace(/\bServo\s+bd_servo_\d+\s*;/g,"")
       .replace(/\bLiquidCrystal_I2C\s+bd_lcd\s*\([^;]*\);/g,"")+body;
+    const globalBlocks=[];
     for(const g of globals) {
       const b=workspace.newBlock(g[1]?"arduino_constant":"arduino_variable");
+      globalBlocks.push(b);
       b.setFieldValue(g[2],"TYPE");b.setFieldValue(g[3],"NAME");
       const valueParser=new BDParser(g[4]);
       const value=valueParser.expression();
