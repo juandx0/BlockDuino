@@ -60,7 +60,7 @@ function initCodeEditor(){
     gutters:["CodeMirror-linenumbers","CodeMirror-lint-markers"],
     lint:{getAnnotations:bdCppLint,async:false},extraKeys:{
       "Ctrl-Space":"autocomplete","Tab":cm=>{if(cm.somethingSelected())cm.indentSelection();else cm.replaceSelection("  ","end");},
-      "Ctrl-/":cm=>cm.toggleComment(),"Ctrl-S":cm=>{cm.save();saveLocal();}
+      "Ctrl-S":cm=>{cm.save();saveLocal();}
     }
   });
   window.codeEditor.setSize("100%","100%");
@@ -69,8 +69,8 @@ function initCodeEditor(){
     if(t.string&&/[A-Za-z_]/.test(t.string[0]))CodeMirror.showHint(cm,bdCppHints,{completeSingle:false});
   });
   window.codeEditor.on("change",()=>{
-    if(typeof onCppEditorChange==="function")onCppEditorChange(window.codeEditor.getValue());
+    if(!window.BDSettingEditor&&typeof onCppEditorChange==="function")onCppEditorChange(window.codeEditor.getValue());
   });
-  window.BDSetEditorValue=value=>{if(window.codeEditor)window.codeEditor.setValue(value);else textarea.value=value;};
+  window.BDSetEditorValue=value=>{if(window.codeEditor){if(window.codeEditor.getValue()===value)return;window.BDSettingEditor=true;window.codeEditor.setValue(value);window.BDSettingEditor=false;}else textarea.value=value;};
   window.BDGetEditorValue=()=>window.codeEditor?window.codeEditor.getValue():textarea.value;
 }
