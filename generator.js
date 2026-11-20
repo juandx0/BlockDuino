@@ -55,7 +55,8 @@ const BD={
    case "arduino_serial_print":return s+"Serial."+f("METHOD")+"("+v("VALUE")+");\n";
    case "arduino_i2c_begin":this.headers.add("Wire.h");return s+"Wire.begin();\n";
    case "arduino_spi_begin":this.headers.add("SPI.h");return s+"SPI.begin();\n";
-   case "arduino_variable":case "arduino_constant":return "";\n   case "arduino_assign":return s+this.safe(f("NAME"))+" = "+v("VALUE")+";\\n";
+   case "arduino_variable":case "arduino_constant":return "";
+   case "arduino_assign":return s+this.safe(f("NAME"))+" = "+v("VALUE")+";\n";
    case "arduino_lcd_init":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"bd_lcd.init();\nbd_lcd.backlight();\n";
    case "arduino_lcd_print":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"bd_lcd.setCursor("+v("COL")+", "+v("ROW")+");\nbd_lcd.print("+v("TEXT")+");\n";
    case "arduino_lcd_clear":this.headers.add("Wire.h");this.headers.add("LiquidCrystal_I2C.h");return s+"bd_lcd.clear();\n";
