@@ -46,3 +46,12 @@ body.light .code .CodeMirror-linenumber{color:#7a899d}
 .bdSimLog{color:var(--muted);line-height:1.5}
 body.light .bdLabWindow{color:#172337}
 @media(max-width:550px){.bdLabBody{padding:13px}.bdLabHead{padding:13px}.bdPart{min-width:100%}}
+
+/* AI assistant summary */
+.bdAiSummary{margin-top:14px;padding:14px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--bg);color:var(--text)}
+.bdAiSummary h3{margin:0 0 9px;font-size:14px;color:var(--accent)}
+.bdAiSummary h4{margin:12px 0 5px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.bdAiSummary p,.bdAiSummary li{font-size:12px;line-height:1.55;color:var(--text)}
+.bdAiSummary p{margin:6px 0}
+.bdAiSummary ul{margin:5px 0;padding-left:19px}
+#bdBuild:disabled{opacity:.65;cursor:wait;transform:none}
