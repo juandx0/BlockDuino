@@ -55,3 +55,16 @@ body.light .bdLabWindow{color:#172337}
 .bdAiSummary p{margin:6px 0}
 .bdAiSummary ul{margin:5px 0;padding-left:19px}
 #bdBuild:disabled{opacity:.65;cursor:wait;transform:none}
+
+/* Fix: los modales deben cubrir completamente la toolbox/flyout de Blockly. */
+#guideOverlay,
+.bdLabOverlay{
+  position:fixed;
+  inset:0;
+  z-index:2147483000!important;
+  isolation:isolate;
+}
+#guideOverlay.visible,
+.bdLabOverlay.visible{
+  display:flex;
+}
